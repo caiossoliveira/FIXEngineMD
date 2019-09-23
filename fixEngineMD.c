@@ -150,6 +150,4 @@ void marketDataHandler(){
 	float fvalor_ativo;
 	float highest_bid = 0.0;
 	float lowest_offer = 9999.9;
-	char test;
-	int test;
 }
