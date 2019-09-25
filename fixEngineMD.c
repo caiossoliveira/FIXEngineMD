@@ -55,18 +55,18 @@ void carryMessage(int msg_length){
 		msg_index--;
 	}
 
+
 	for(i = 0; i < msg_length - next_message_length + 1; i++){ //+ 1 to take the SOH character
 		fix_message[i] = message[i];
 	}
 
 	interval = msg_length - next_message_length + 1;
 
-	for(i = 0; i < next_message_length + 1; i++){
-		message[i] = message[interval];
+	for(i = 0; i < next_message_length; i++){
+		message[i] = message[interval-1];
 		interval++;
 	}
 
-	printf("=======================================================\n");
 	for(int i=0; i<msg_index+1; i++){
 		if(fix_message[i] == '')
 			fix_message[i] = '|';
@@ -80,8 +80,6 @@ void carryMessage(int msg_length){
 		}
 		
 	}
-	printf("\n");
-	printf("========================================================\n");
 }
 
 void messageIdentifier(){
@@ -160,11 +158,11 @@ void preProcessing(){
 }
 
 void preProcessingMDFull(){
-	printf("Market Data Full Reflesh \n\n");
+	printf("\n\nMarket Data Full Reflesh\n");
 }	
 
 void preProcessingMDIncr(){
-	printf("Market Data Incremental Reflesh \n\n");
+	printf("\n\nMarket Data Incremental Reflesh\n");
 }
 
 void marketDataHandler(){
