@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char fix_message[5000]; //variable shared by messageIdentifier and Pre-processing
-char message[5000];
+char fix_message[90000]; //variable shared by messageIdentifier and Pre-processing
+char message[90000];
 char message_type = ' '; //variable shared by messageIdentifier and Pre-processing. Used to know what type of message the array is.
 int count = 0;
 int next_message_length = 0;
@@ -27,7 +27,9 @@ int main(){
 }
 
 void openFile(){
-	file = fopen("fix.051.full_reflesh-simplified.log", "r");
+	//file = fopen("fix.051.full_reflesh-simplified.log", "r");
+	file = fopen("fix.051.snap-resume.log", "r");
+	//file = fopen("fix.051.snap.log", "r");
 }
 
 char readNextCharacter(){
@@ -44,42 +46,64 @@ char readNextCharacter(){
 void carryMessage(int msg_length){
 	/*this function identify each FIX message, removing the information not necessary 
 	for the pro-processing function.*/
+	//printf("\n\n ================================================================================ \n");
+	//printf("\n msg_length: %d\n", msg_length);
 
 	int i;
 	int msg_index = msg_length;
 	int interval = 0;
+	int aux_interval = 0;
+	int aux_msg_index;
 	next_message_length = 0;
 
-	while(message[msg_index] != ''){
+	/*printf("\n Whole message: \n");
+	for(i=0; i<msg_length; i++){
+		if(message[i] == '')
+			printf("|");
+		else
+			printf("%c", message[i]);
+	}*/
+
+	//if the msg has '\n', uses -1
+	while(message[msg_index-1] != ''){ //count the index n of the message until find the SOH. This is the length of the next fix message //-1 bcs sometimes the msg_index get the SOH 
 		next_message_length++;
 		msg_index--;
 	}
 
+	//printf("\n next_message_length: %d\n", next_message_length);
 
-	for(i = 0; i < msg_length - next_message_length + 1; i++){ //+ 1 to take the SOH character
-		fix_message[i] = message[i];
+	for(i = 0; i < msg_length - next_message_length + 1; i++){ //+ 1 to get the SOH character
+		fix_message[i] = message[i]; //fix_message receives the message without the next one
 	}
 
 	interval = msg_length - next_message_length + 1;
+	aux_interval = interval; //this var is used to increment in the next for without changing the oficial interval variable. This way, it's not bug the next function functioning.
+
+	//printf("\n interval: %d\n", interval);
 
 	for(i = 0; i < next_message_length; i++){
-		message[i] = message[interval-1];
-		interval++;
+		message[i] = message[aux_interval-1];
+		aux_interval++;
 	}
 
-	for(int i=0; i<msg_index+1; i++){
+	/*for(int i=0; i<msg_index+1; i++){ //print until the msg_index.
 		if(fix_message[i] == '')
 			fix_message[i] = '|';
-	}
+	}*/
 
 	preProcessing(); //send the message to the pre-processing function
 
+	//printf("\n fix message: \n");
 	for(int i=0; i < interval; i++){ //to remove trash of the 35 tag
-		if(fix_message[i] != '\0'){
+		if(fix_message[i] == '')
+			printf("|");
+		else
 			printf("%c", fix_message[i]);	
-		}
+		
 		
 	}
+
+	printf("\n ================================================================================ \n\n");
 }
 
 void messageIdentifier(){
