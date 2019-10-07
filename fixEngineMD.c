@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char fix_message[90000]; //variable shared by messageIdentifier and Pre-processing
-char message[90000];
+char fix_message[200000]; //variable shared by messageIdentifier and Pre-processing
+char message[200000];
 char message_type = ' '; //variable shared by messageIdentifier and Pre-processing. Used to know what type of message the array is.
 int count = 0;
 int next_message_length = 0;
