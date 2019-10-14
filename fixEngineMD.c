@@ -26,8 +26,9 @@ FILE* file; //variable shared by openFile and readNextCharacter
 
 void openFile(){
 	//file = fopen("fix.051.full_reflesh-simplified.log", "r");
-	file = fopen("fix.051.snap-resumido.log", "r");
+	//file = fopen("fix.051.snap-resumido.log", "r");
 	//file = fopen("fix.051.snap.log", "r");
+	file = fopen("fix.051.snap-1message.log", "r");
 }
 
 char readNextCharacter(){
@@ -41,8 +42,8 @@ char readNextCharacter(){
 	}	
 }
 
-char fix_message[200000]; //variable shared by messageIdentifier and carryMessage
-char message[200000];
+char fix_message[500000]; //variable shared by messageIdentifier and carryMessage
+char message[500000];
 int next_message_length = 0; //variable shared by messageIdentifier and carryMessage
 
 void messageIdentifier(){
@@ -154,12 +155,15 @@ void carryMessage(int msg_length){
 
 /*END OF MESSAGE IDENTIFIER BLOCK*/
 
+
+
+
 /* BEGIN OF PRE-PROCESSING BLOCK */
 void preProcessing(int msg_length, char message_type){
 
 	switch(message_type){
 		case 'W':
-			preProcessingMDFull();
+			preProcessingMDFull(msg_length);
 		break;
 
 		case 'X':
@@ -167,10 +171,10 @@ void preProcessing(int msg_length, char message_type){
 		break;
 
 		default:
-			printf("Message type do not identified (%c)", message_type);
+			printf("Unidentified MessageType (%c)", message_type);
 	}
 
-	for(int i=0; i < msg_length; i++){ //to remove trash of the 35 tag
+	for(int i=0; i < msg_length; i++){ 
 		if(memory_message[i] == '')
 			printf("|");
 		else
@@ -181,8 +185,136 @@ void preProcessing(int msg_length, char message_type){
 
 }
 
-void preProcessingMDFull(){
+void preProcessingMDFull(int msg_length){
+	//function that analyse the required tags of each type of message
+	//required tag for MDFullReflesh: 911, 268, 269, 272, 273, 37017 (268, 269, 272, 273, 911, 37017)
+	//dependents: 37100 if 269=3; 3939 if 269=g and 1147 and 1149 are sent; 270 when MD involves a price; 271 when MD involves a quantity;
+	//dependents: 37016 if 269=2 and for equities market; 274 is the direction of tick, so it's required when reporting a trade; 
+	//dependents: 342 when MDEntryType=c and SecurityTradingStatus=21; 336 is used to mark non-regular session trades. valid values: 6;
+	//dependents: 1174 if MDEntryType=c and 326 is filled. valid values=101 and 102; 9325 if 269=5 or/and 286=4; 37013 if indicates previous day's closing price.
+	//dependents: 37 if the bid or offer represents an order; 1003 if it's reporting a trade; 346 if it's a price-depth book entry; 290 if MDEntryType = 0 or 1;
+	//dependents: 731 if MDEntryType=6; 37008 used with auction price banding; 37003 DailyAvgShared30D, for equity market only; 432 is used in BTB contracts only;
+	//dependents: 37019 is used in BTB contracts only; 37023 used in BTB contracts only, if not sent, means the offer is not certified; 37024 is used in BTB contracs only;
+	//dependents: 37025 is used BTB contracts only; 1140 ?; 1025 if 269=v; 31 if 269 =v; 811 if 2569=v; 711 if 269=D; 37008 is used with auction price banding;
+	//dependents: 309, 305, 308, 810 is required if 37008 is present; 37018 used when 269=D and 37008 is present.
+
 	printf("\n\nMarket Data Full Reflesh\n");
+
+	//911, 268, 269, 272, 273, 37017
+	char tagTotNumReports[4], tagNoMDEntries[4], tagMDEntryType, tagMDEntryDate[8], tagMDEntryTime[10], tag37017[10];
+	int indexTagTotNumReports = 0, indexTagNoMDEntries = 0, indexTagMDEntryType = 0, indexTagMDEntryDate = 0, indexTagMDEntryTime = 0, indexTag37017 = 0;
+
+	int aux_msg_length = msg_length;
+	int i = 0;
+
+	while(aux_msg_length > 0){
+
+		if(memory_message[i] == '2'){ //tags 268, 269 and 273
+			i++;
+			aux_msg_length--;
+			if(memory_message[i] == '6'){ //tag 268 and 269
+				i++;
+				aux_msg_length--;
+				if(memory_message[i] == '8'){ //tag 268
+					i++;
+					aux_msg_length--;
+					if(memory_message[i] == '='){ //tag268=
+						i++;
+						aux_msg_length--;
+						while(memory_message[i] != '' && aux_msg_length > 0){
+							i++;
+							aux_msg_length--;
+							tagNoMDEntries[indexTagNoMDEntries] = memory_message[i];
+							indexTagNoMDEntries++;
+						}
+					}
+				}
+				else if(memory_message[i] == '9'){ //tag 269
+					if(memory_message[i] == '='){
+						i++;
+						aux_msg_length--;
+						while(memory_message[i] != '' && aux_msg_length > 0){
+							i++;
+							aux_msg_length--;
+							tagMDEntryType = memory_message[i];
+							indexTagMDEntryType++;
+						}
+					}
+				}
+			}
+			else if(memory_message[i] == '7'){ //tag 273
+				i++;
+				aux_msg_length--;
+				if(memory_message[i] == '2'){ //tag 272
+					i++;
+					aux_msg_length--;
+					if(memory_message[i] == '='){
+						i++;
+						aux_msg_length--;
+						while(memory_message[i] != '' && aux_msg_length > 0){
+							i++;
+							aux_msg_length--;
+							tagMDEntryDate[indexTagMDEntryDate] = memory_message[i];
+							indexTagMDEntryDate++;
+						}
+					}
+					
+				}
+				if(memory_message[i] == '3'){ //tag 273
+					i++;
+					aux_msg_length--;
+					if(memory_message[i] == '2'){ //tag 272
+						i++;
+						aux_msg_length--;
+						if(memory_message[i] = '='){
+							i++;
+							aux_msg_length--;
+							while(memory_message[i] != '' && aux_msg_length > 0){
+								i++;
+								aux_msg_length--;
+								tagMDEntryDate[indexTagMDEntryDate] = memory_message[i];
+								indexTagMDEntryDate++;
+							}
+						}	
+					}
+				}
+			}
+		}
+		else if(memory_message[i] == '9'){ //tag 911
+			i++;
+			aux_msg_length--;
+			i++;
+			aux_msg_length--;
+			if(memory_message[i] == '1'){ //tag 911
+				i++;
+				aux_msg_length--;
+				if(memory_message[i] == '1'){ //tag 911
+					i++;
+					aux_msg_length--;
+					if(memory_message[i] == '='){ //tag911=
+						i++;
+						aux_msg_length--;
+						while(memory_message[i] != '' && aux_msg_length > 0){
+							i++;
+							aux_msg_length--;
+							tagTotNumReports[indexTagTotNumReports] = memory_message[i];
+							indexTagTotNumReports++;
+						}
+					}
+				}
+			}
+		}
+		else{
+			i++;
+			aux_msg_length--;
+		}
+	}
+
+	printf("\n NoMDEntries: ");
+	for(int i=0; i<indexTagNoMDEntries; i++){
+		printf("%s", tagNoMDEntries);
+	}
+	printf("\n");
 }	
 
 void preProcessingMDIncr(){
