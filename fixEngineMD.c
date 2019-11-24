@@ -197,7 +197,6 @@ void preProcessingMDFull(int msg_length){
 	int i = 0;
 	int status_msg = 1; //true - valid message
 		
-	
 
 	if(strstr(memory_message, "269=") != NULL && strstr(memory_message, "270=") != NULL && strstr(memory_message, "271=") != NULL){
 		printf("\n\nThe message is valid \n");
@@ -207,6 +206,8 @@ void preProcessingMDFull(int msg_length){
 	}
 
 	printf("\n");
+
+	marketDataHandler();
 }	
 
 void preProcessingMDIncr(){
@@ -214,11 +215,22 @@ void preProcessingMDIncr(){
 }
 
 void marketDataHandler(){
-	int n = 0;
-	char ctipo_de_oferta;
-	int tipo_de_oferta;
-	char cvalor_ativo[10];
-	float fvalor_ativo;
+
 	float highest_bid = 0.0;
 	float lowest_offer = 9999.9;
+	char MDEntryType;
+
+	char *char_pointer;
+	long int index;
+
+	printf("\n\n======= Book ======\n");
+
+	char_pointer = strstr(memory_message, "269=");
+	index = char_pointer - memory_message; //pointers calculation to get the '2' position (position of "2" - position of the inicial fix message)
+
+	MDEntryType = memory_message[index + 4];
+
+	printf("\n\nIndex: %ld\n", index);
+	printf("\n\n MDEntryType: %c\n", MDEntryType);
+	//memory_message
 }
