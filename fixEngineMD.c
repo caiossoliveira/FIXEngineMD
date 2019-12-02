@@ -212,13 +212,14 @@ void marketDataHandler(int msg_length){
 	char MDEntryType = ' ';
 	float MDEntryPx = 0.0;
 	char SecurityID[8];
+	int MDEntryPositionNo;
 
 	char *char_pointer;
 	long int index;
 
 	int index_char = 0;
 	char token[64];
-	int index_token = 0;
+	int index_token = 1;
 
 	for(int i=0; i < msg_length; i++){ 
 		if(memory_message[i] == '')
@@ -229,10 +230,11 @@ void marketDataHandler(int msg_length){
 
 	printf("\n\n");
 
-	for(int i=0; i<msg_length; i++){ //go through the message
+	token[0] = '';
 
+	for(int i=0; i<msg_length; i++){ //go through the message
 		if(memory_message[i] == ''){
-			if(strstr(token, "48=") != NULL){
+			if(strstr(token, "48=") != NULL){
 				int j = 0;
 				char_pointer = strstr(token, "48=");
 				index_char = char_pointer - token; //pointers calculation to get the '4' position (position of "2" - position of the inicial fix message)
@@ -243,25 +245,25 @@ void marketDataHandler(int msg_length){
 				}
 				j=0;
 
-				printf("\n\nField identified: %s", token);
-				printf(" || SecurityID: %s\n\n", SecurityID);
+				printf("\n\nField identified: %s", &token[1]);
+				printf(" || SecurityID: %s\n", SecurityID);
 				
-				index_token = 0;
-				memset(token, 0, sizeof(token)); //clean the token
+				index_token = 1;
+				memset(token + 1, 0, sizeof(token)); //clean the token, except the first position
 			}
-			else if(strstr(token, "269=") != NULL){
+			else if(strstr(token, "269=") != NULL){
 				char_pointer = strstr(token, "269=");
 				index_char = char_pointer - token; //pointers calculation to get the '2' position (position of "2" - position of the inicial fix message)
 				
 				MDEntryType = token[index_char + 4];
 
-				printf("\n\nField identified: %s", token);
-				printf(" || MDEntryType: %c\n\n", MDEntryType);
+				printf("\n\nField identified: %s", &token[1]);
+				printf(" || MDEntryType: %c\n", MDEntryType);
 				
-				index_token = 0;
-				memset(token, 0, sizeof(token)); //clean the token
+				index_token = 1;
+				memset(token + 1, 0, sizeof(token)); //clean the token, except the first position
 			}
-			else if(strstr(token, "270=") != NULL){
+			else if(strstr(token, "270=") != NULL){
 				char entryPx[8];
 				int j = 0;
 				memset(entryPx, 0, sizeof(entryPx));
@@ -277,16 +279,28 @@ void marketDataHandler(int msg_length){
 
 				MDEntryPx = atof(entryPx);
 
-				printf("\n\nField identified: %s", token);
-				printf(" || MDEntryPx: %.2f\n\n", MDEntryPx);
+				printf("\n\nField identified: %s", &token[1]);
+				printf(" || MDEntryPx: %.2f\n", MDEntryPx);
 				
-				index_token = 0;
-				memset(token, 0, sizeof(token)); //clean the token
+				index_token = 1;
+				memset(token + 1, 0, sizeof(token)); //clean the token, except the first position
+			}
+			else if(strstr(token, "290=") != NULL){
+				char_pointer = strstr(token, "290=");
+				index_char = char_pointer - token; 
+
+				MDEntryPositionNo = (token[index_char + 4] - '0'); // char to int conversion
+
+				printf("\n\nField identified: %s", &token[1]);
+				printf(" || MDEntryPositionNo: %d\n", MDEntryPositionNo);
+				
+				index_token = 1;
+				memset(token + 1, 0, sizeof(token)); //clean the token, except the first position
 			}
 			else{
-				printf("\n\nField do not identified: %s\n", token);
-				index_token = 0;
-				memset(token, 0, sizeof(token)); //clean the token
+				//printf("\n\nField do not identified: %s\n", &token[1]);
+				index_token = 1;
+				memset(token + 1, 0, sizeof(token)); //clean the token, except the first position
 			}
 		}
 		else{
@@ -294,4 +308,12 @@ void marketDataHandler(int msg_length){
 			index_token++;
 		}
 	}
+
+	printf("\n######## Book ToB ########");
+	printf("\nSecurityID: %s", SecurityID);
+	printf("\nMDEntryPositionNo: %d", MDEntryPositionNo);
+	printf("\nOffer: %.2f", MDEntryPx);
+	printf("\nBid: do not available");
+	printf("\n#########################\n\n\n\n");
+
 }
