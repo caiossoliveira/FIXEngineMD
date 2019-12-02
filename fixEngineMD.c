@@ -14,7 +14,8 @@ void preProcessing(int msg_length, char message_type);
 void preProcessingMDFull();	
 void preProcessingMDIncr();	
 
-void marketDataHandler();
+//Processing functions
+void marketDataHandler(int msg_length);
 
 int main(){
 	openFile();
@@ -174,16 +175,6 @@ void preProcessing(int msg_length, char message_type){
 		default:
 			printf("Unidentified MessageType (%c)", message_type);
 	}
-
-	for(int i=0; i < msg_length; i++){ 
-		if(memory_message[i] == '')
-			printf("|");
-		else
-			printf("%c", memory_message[i]);
-	}
-
-	printf("\n\n\n");
-
 }
 
 void preProcessingMDFull(int msg_length){
@@ -198,7 +189,7 @@ void preProcessingMDFull(int msg_length){
 	int status_msg = 1; //true - valid message
 		
 
-	if(strstr(memory_message, "269=") != NULL && strstr(memory_message, "270=") != NULL && strstr(memory_message, "271=") != NULL){
+	if(strstr(memory_message, "269=") != NULL && strstr(memory_message, "270=") != NULL && strstr(memory_message, "271=") != NULL && strstr(memory_message, "48=") != NULL){
 		printf("\n\nThe message is valid \n");
 	}
 	else{
@@ -207,30 +198,100 @@ void preProcessingMDFull(int msg_length){
 
 	printf("\n");
 
-	marketDataHandler();
+	marketDataHandler(msg_length);
 }	
 
 void preProcessingMDIncr(){
 	printf("\n\nMarket Data Incremental Reflesh\n");
 }
 
-void marketDataHandler(){
+void marketDataHandler(int msg_length){
 
 	float highest_bid = 0.0;
 	float lowest_offer = 9999.9;
-	char MDEntryType;
+	char MDEntryType = ' ';
+	float MDEntryPx = 0.0;
+	char SecurityID[8];
 
 	char *char_pointer;
 	long int index;
 
-	printf("\n\n======= Book ======\n");
+	int index_char = 0;
+	char token[64];
+	int index_token = 0;
 
-	char_pointer = strstr(memory_message, "269=");
-	index = char_pointer - memory_message; //pointers calculation to get the '2' position (position of "2" - position of the inicial fix message)
+	for(int i=0; i < msg_length; i++){ 
+		if(memory_message[i] == '')
+			printf("|");
+		else
+			printf("%c", memory_message[i]);
+	}
 
-	MDEntryType = memory_message[index + 4];
+	printf("\n\n");
 
-	printf("\n\nIndex: %ld\n", index);
-	printf("\n\n MDEntryType: %c\n", MDEntryType);
-	//memory_message
+	for(int i=0; i<msg_length; i++){ //go through the message
+
+		if(memory_message[i] == ''){
+			if(strstr(token, "48=") != NULL){
+				int j = 0;
+				char_pointer = strstr(token, "48=");
+				index_char = char_pointer - token; //pointers calculation to get the '4' position (position of "2" - position of the inicial fix message)
+
+				for(int i = index_char + 3; i < 12; i++){ //+4 to get the number since the '='
+					SecurityID[j] = token[i];
+					j++;
+				}
+				j=0;
+
+				printf("\n\nField identified: %s", token);
+				printf(" || SecurityID: %s\n\n", SecurityID);
+				
+				index_token = 0;
+				memset(token, 0, sizeof(token)); //clean the token
+			}
+			else if(strstr(token, "269=") != NULL){
+				char_pointer = strstr(token, "269=");
+				index_char = char_pointer - token; //pointers calculation to get the '2' position (position of "2" - position of the inicial fix message)
+				
+				MDEntryType = token[index_char + 4];
+
+				printf("\n\nField identified: %s", token);
+				printf(" || MDEntryType: %c\n\n", MDEntryType);
+				
+				index_token = 0;
+				memset(token, 0, sizeof(token)); //clean the token
+			}
+			else if(strstr(token, "270=") != NULL){
+				char entryPx[8];
+				int j = 0;
+				memset(entryPx, 0, sizeof(entryPx));
+
+				char_pointer = strstr(token, "270=");
+				index_char = char_pointer - token; //pointers calculation to get the '2' position (position of "2" - position of the inicial fix message)
+
+				for(int i = index_char + 4; i < 12; i++){ //+4 to get the number since the '='
+					entryPx[j] = token[i];
+					j++;
+				}
+				j=0;
+
+				MDEntryPx = atof(entryPx);
+
+				printf("\n\nField identified: %s", token);
+				printf(" || MDEntryPx: %.2f\n\n", MDEntryPx);
+				
+				index_token = 0;
+				memset(token, 0, sizeof(token)); //clean the token
+			}
+			else{
+				printf("\n\nField do not identified: %s\n", token);
+				index_token = 0;
+				memset(token, 0, sizeof(token)); //clean the token
+			}
+		}
+		else{
+			token[index_token] = memory_message[i];
+			index_token++;
+		}
+	}
 }
