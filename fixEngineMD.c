@@ -47,6 +47,7 @@ char readNextCharacter(){
 char fix_message[500000]; //variable shared by messageIdentifier and carryMessage
 char message[500000];
 int next_message_length = 0; //variable shared by messageIdentifier and carryMessage
+char global_SecurityID[8] = {"3809696"}; //interface with the user
 
 void messageIdentifier(){
 	int status_tag_35 = 0; //false
@@ -207,8 +208,6 @@ void preProcessingMDIncr(){
 
 void marketDataHandler(int msg_length){
 
-	float highest_bid = 0.0;
-	float lowest_offer = 9999.9;
 	char MDEntryType = ' ';
 	float MDEntryPx = 0.0;
 	char SecurityID[8];
@@ -221,6 +220,10 @@ void marketDataHandler(int msg_length){
 	char token[64];
 	int index_token = 1;
 
+	float highest_bid = 0.0;
+	float lowest_offer = 9999.9;
+	float closingPrice;
+
 	for(int i=0; i < msg_length; i++){ 
 		if(memory_message[i] == '')
 			printf("|");
@@ -232,6 +235,7 @@ void marketDataHandler(int msg_length){
 
 	token[0] = '';
 
+	//variables atributions
 	for(int i=0; i<msg_length; i++){ //go through the message
 		if(memory_message[i] == ''){
 			if(strstr(token, "48=") != NULL){
@@ -281,6 +285,16 @@ void marketDataHandler(int msg_length){
 
 				printf("\n\nField identified: %s", &token[1]);
 				printf(" || MDEntryPx: %.2f\n", MDEntryPx);
+
+				if(MDEntryType == '0'){
+					if(MDEntryPx > highest_bid){
+						highest_bid = MDEntryPx;
+						printf("\n\nTESTE\n\n");
+					}
+				}
+				else if(MDEntryType == '5'){
+					closingPrice = MDEntryPx;
+				}
 				
 				index_token = 1;
 				memset(token + 1, 0, sizeof(token)); //clean the token, except the first position
@@ -298,7 +312,7 @@ void marketDataHandler(int msg_length){
 				memset(token + 1, 0, sizeof(token)); //clean the token, except the first position
 			}
 			else{
-				//printf("\n\nField do not identified: %s\n", &token[1]);
+				printf("\n\nField do not identified: %s\n", &token[1]);
 				index_token = 1;
 				memset(token + 1, 0, sizeof(token)); //clean the token, except the first position
 			}
@@ -309,11 +323,18 @@ void marketDataHandler(int msg_length){
 		}
 	}
 
-	printf("\n######## Book ToB ########");
-	printf("\nSecurityID: %s", SecurityID);
-	printf("\nMDEntryPositionNo: %d", MDEntryPositionNo);
-	printf("\nOffer: %.2f", MDEntryPx);
-	printf("\nBid: do not available");
-	printf("\n#########################\n\n\n\n");
+	if(strcmp(SecurityID, global_SecurityID) == 0){
+		printf("\n######## Book ToB ########");
+		printf("\nSecurityID: %s", SecurityID);
 
+		if(lowest_offer > 9999.0)
+			printf("\nOffer: do not available.");
+		else
+			printf("\nOffer: %.2f", lowest_offer);	
+		if(highest_bid == 0.0)
+			printf("\nBid: do not available.");
+		else
+			printf("\nBid: %.2f", highest_bid);
+		printf("\n#########################\n\n\n\n");
+	}
 }
