@@ -12,6 +12,8 @@ void readNextByte(); //used to read which byte of the FAST message
 void identifyField(); //used to identify which field of the message
 void identifyMessage1(); //used to get the principal message of the FIX fields
 int binaryToInt(long long n);
+void binaryToString();
+void marketDataHandler();
 
 FILE* file; //variable shared by openFile and readNextCharacter
 int isFirstByte = 1; //is it the first byte of the field = true
@@ -139,7 +141,7 @@ char MDEntryTime[15];
 
 void identifyMessage1(){
 	if(statusSymbol == 0){
-		strcpy(symbol, field);
+		binaryToString();
 		printf("\n\n Symbol: %s \n", symbol);
 		statusSymbol = 1; //true
 		strcpy(field, "");
@@ -178,6 +180,8 @@ void identifyMessage1(){
 		statusMDEntryTime = 0;
 
 		statusMsg = 1;
+
+		marketDataHandler();
 	}
 }
 
@@ -190,5 +194,51 @@ int binaryToInt(long long n) {
         ++i;
     }
     return dec;
+}
+
+char character[8];
+char aux_field[5000];
+int c = 0;
+
+void binaryToString(){
+	int j = 0; 
+	strcpy(aux_field, field);
+	for(int i = 0; i < strlen(aux_field); i++){
+		character[c] = aux_field[i];
+		c++;
+		if((i+1) % 8 == 0 && i != 0){
+			character[0] = '0';
+			symbol[j] = strtol(character, 0, 2);
+			j++;
+			c = 0;
+		}
+	}
+}
+
+//market data handler
+
+float highest_bid = 0.0;
+float lowest_offer = 9999.9;
+
+void marketDataHandler(){
+
+	printf("\n Market Data Handler \n");
+
+	printf("\n ######## Book - ToB ########");
+	printf("\n Symbol: %s", symbol);
+
+	if(MDEntryType == 0){
+		highest_bid = MDEntryPx;
+	}
+
+	if(lowest_offer > 9999.0)
+		printf("\n Offer: do not available.");
+	else
+		printf("\n Offer: %.2f", lowest_offer);	
+	if(highest_bid == 0.0)
+		printf("\n Bid: do not available.");
+	else
+		printf("\n Bid: %.2f", highest_bid);
+	printf("\n #########################\n\n\n\n");
 }
 

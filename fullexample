@@ -1,0 +1,27 @@
+Por exemplo, suponha-se que, seguindo o padrão FIX, a mensagem 
+
+55=FOO1 | 269=0 | 270=1300 | 271=100000 | 273=17:57:01.352 
+
+será enviada. Para a mesma ser compreendida, os templates devem conter os campos correspondentes, que são 
+
+Symbol | MDEntryType | MDEntryPx | MDEntrySize | MDEntryTime. 
+
+Portanto, a mensagem FAST seria algo como 
+
+FOO1 | 0 | 1300 | 100000 |17:57:01.352. 
+
+Porém, sem os caracteres de separação e com representação binária (Troquei o F001 por IBM):
+
+01001001 01000010 11001101 | 1000000 | 00010011 10000000 | 17:57:01.352
+
+Mensagem completa (SeqNumber ^ PMap ^ TemplateId ^ Msg).
+
+10000001 ^ 11111100 ^ 10000001 ^ 01001001 01000010 11001101 | 10000000 | 00010011 10000000 | 10000001 | 17:57:01.352
+
+
+Sem separação:
+
+1000000111111100100000010100100101000010110011011000000000010011100000001100000017:57:01.352
+
+
+
